@@ -5,7 +5,10 @@ from buffer import ReplayBuffer
 from networks import DuellingDQN
 import environments
 import random
+from log_utils import create_logger, write_log
 
+log_file = "train"
+logger = create_logger(log_file)
 use_cuda = torch.cuda.is_available()
 
 
@@ -56,7 +59,26 @@ class DQN:
         separate_goals,
         gamma,
         loss_function,
+        log_freq,
     ):
+        write_log("DQN config", logger)
+        write_log("env_config: {0}".format(env_config), logger)
+        write_log("buffer_size: {0}".format(buffer_size), logger)
+        write_log("batch_size: {0}".format(batch_size), logger)
+        write_log("hidden_size: {0}".format(hidden_size), logger)
+        write_log("act: {0}".format(act), logger)
+        write_log("epsilon_start: {0}".format(epsilon_start), logger)
+        write_log("epsilon_end: {0}".format(epsilon_end), logger)
+        write_log("epsilon_decay_rate: {0}".format(epsilon_decay_rate), logger)
+        write_log("evaluate_episodes: {0}".format(evaluate_episodes), logger)
+        write_log("use_hindsight: {0}".format(use_hindsight), logger)
+        write_log("polyak_weight: {0}".format(polyak_weight), logger)
+        write_log("smoothing_factor: {0}".format(smoothing_factor), logger)
+        write_log("separate_goals: {0}".format(separate_goals), logger)
+        write_log("gamma: {0}".format(gamma), logger)
+        write_log("loss_function: {0}".format(loss_function), logger)
+        write_log("log_freq: {0}".format(log_freq), logger)
+
         self.epsilon_decay_rate = epsilon_decay_rate
         self.epsilon_start = epsilon_start
         self.epsilon_end = epsilon_end
@@ -104,6 +126,7 @@ class DQN:
         self.gamma = gamma
         self.loss_function = loss_function
         self.batch_size = batch_size
+        self.log_freq = log_freq
 
     @property
     def epsilon(self):
@@ -270,9 +293,21 @@ class DQN:
     def train(self, episodes):
         while self.num_episodes_trained < episodes:
             self.play_episode()
+            if self.num_episodes_trained % self.log_freq == 0:
+                write_log(
+                    "Trained episode {0}/{1}, latest smoothed reward {2}".format(
+                        self.num_episodes_trained,
+                        episodes,
+                        self.smoothed_episode_rewards[-1],
+                    ),
+                    logger,
+                )
 
     @property
     def evaluate(self):
-        return np.mean(
+        write_log("Evaluating on {0} episodes".format(self.evaluate_episodes), logger)
+        success_rate = np.mean(
             [self.play_episode(False) for _ in range(self.evaluate_episodes)]
         )
+        write_log("Result: {0}".format(success_rate), logger)
+        return success_rate
