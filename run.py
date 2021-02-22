@@ -1,5 +1,5 @@
 def test_func():
-    print("hi")
+    pass
 
 
 if __name__ == "__main__":

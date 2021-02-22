@@ -1,0 +1,1 @@
+for f in *.py; do black $f; done
