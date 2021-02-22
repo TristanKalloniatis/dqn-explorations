@@ -11,8 +11,8 @@ class GoalEnv:
         self.n = n
         self.shaped_reward = shaped_reward
 
-        self.state = self.generate_state()
-        self.goal_state = self.generate_state()
+        self.state = None
+        self.goal_state = None
         self.action_space = []
         self.episode_length = 0
         self.max_episode_length = 1
@@ -29,6 +29,8 @@ class GoalEnv:
         raise NotImplementedError
 
     def non_trivial_state(self):
+        self.state = self.generate_state()
+        self.goal_state = self.generate_state()
         while self.solved:
             self.non_trivial_state()
 
