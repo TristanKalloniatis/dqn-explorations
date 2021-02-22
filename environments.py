@@ -171,6 +171,11 @@ class GridWorld(GoalEnv):
         self.__init__(self.n, self.shaped_reward, self.image_observations)
         return self.observation
 
+    def plot(self):  # Purely for debugging purposes
+        from matplotlib.pyplot import imshow
+
+        imshow((self.observation - self.goal).squeeze(0))
+
 
 class GymEnv:
     def __init__(self, name):

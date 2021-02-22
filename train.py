@@ -6,10 +6,13 @@ from networks import DuellingDQN
 import environments
 import random
 from log_utils import create_logger, write_log
+import hyperparameters
 
 log_file = "train"
 logger = create_logger(log_file)
 use_cuda = torch.cuda.is_available()
+message = "Found GPU {0}".format(torch.device("cuda")) if use_cuda else "No GPU"
+write_log(message, logger)
 
 
 def epsilon_by_frame(num_frames_seen, epsilon_start, epsilon_end, epsilon_decay_rate):
@@ -45,21 +48,21 @@ class DQN:
     def __init__(
         self,
         env_config,
-        buffer_size,
-        batch_size,
-        hidden_size,
-        act,
-        epsilon_start,
-        epsilon_end,
-        epsilon_decay_rate,
-        evaluate_episodes,
-        use_hindsight,
-        polyak_weight,
-        smoothing_factor,
-        separate_goals,
-        gamma,
-        loss_function,
-        log_freq,
+        buffer_size=hyperparameters.BUFFER_SIZE,
+        batch_size=hyperparameters.BATCH_SIZE,
+        hidden_size=hyperparameters.HIDDEN_SIZE,
+        act=torch.nn.ReLU,
+        epsilon_start=hyperparameters.EPSILON_START,
+        epsilon_end=hyperparameters.EPSILON_END,
+        epsilon_decay_rate=hyperparameters.EPSILON_DECAY_RATE,
+        evaluate_episodes=hyperparameters.EVALUATE_EPISODES,
+        use_hindsight=False,
+        polyak_weight=hyperparameters.POLYAK_WEIGHT,
+        smoothing_factor=hyperparameters.SMOOTHING_FACTOR,
+        separate_goals=True,
+        gamma=hyperparameters.GAMMA,
+        loss_function=torch.nn.MSELoss,
+        log_freq=hyperparameters.LOG_FREQ,
     ):
         write_log("DQN config", logger)
         write_log("env_config: {0}".format(env_config), logger)
@@ -79,10 +82,20 @@ class DQN:
         write_log("loss_function: {0}".format(loss_function), logger)
         write_log("log_freq: {0}".format(log_freq), logger)
 
+        self.evaluate_episodes = evaluate_episodes
+        self.use_hindsight = use_hindsight
+        self.polyak_weight = polyak_weight
+        self.act = act
+        self.separate_goals = separate_goals
+        self.gamma = gamma
+        self.loss_function = loss_function
+        self.batch_size = batch_size
+        self.log_freq = log_freq
         self.epsilon_decay_rate = epsilon_decay_rate
         self.epsilon_start = epsilon_start
         self.epsilon_end = epsilon_end
         self.smoothing_factor = smoothing_factor
+
         self.environment = build_environment(env_config)
         self.buffer = ReplayBuffer(
             buffer_size, batch_size, self.environment.store_goals
@@ -106,27 +119,16 @@ class DQN:
         self.synchronise(False)
 
         self.optimiser = torch.optim.Adam(self.current_network.parameters())
-
         self.device = torch.device("cuda" if use_cuda else "cpu")
         if use_cuda:
             self.current_network.cuda()
             self.target_network.cuda()
-
         self.episode_rewards = []
         self.losses = []
         self.smoothed_episode_rewards = []
         self.smoothed_losses = []
         self.num_episodes_trained = 0
         self.num_frames_seen = 0
-        self.evaluate_episodes = evaluate_episodes
-        self.use_hindsight = use_hindsight
-        self.polyak_weight = polyak_weight
-        self.act = act
-        self.separate_goals = separate_goals
-        self.gamma = gamma
-        self.loss_function = loss_function
-        self.batch_size = batch_size
-        self.log_freq = log_freq
 
     @property
     def epsilon(self):
