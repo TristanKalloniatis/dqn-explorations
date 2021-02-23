@@ -47,7 +47,8 @@ def build_environment(env_config):
 class DQN:
     def __init__(
         self,
-        env_config,
+        env_name,
+        env_params={},
         buffer_size=hyperparameters.BUFFER_SIZE,
         batch_size=hyperparameters.BATCH_SIZE,
         hidden_size=hyperparameters.HIDDEN_SIZE,
@@ -64,6 +65,8 @@ class DQN:
         loss_function=torch.nn.MSELoss,
         log_freq=hyperparameters.LOG_FREQ,
     ):
+        env_config = env_params
+        env_config["name"] = env_name
         write_log("DQN config", logger)
         write_log("env_config: {0}".format(env_config), logger)
         write_log("buffer_size: {0}".format(buffer_size), logger)
