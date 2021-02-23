@@ -181,7 +181,7 @@ class DQN:
             .squeeze(1)
         )
         with torch.no_grad():
-            next_values = self.target_network(next_observations, goals).max(1)[0]
+            next_values = self.target_network(next_observations, goals).max(-1)[0]
             targets = rewards + torch.where(
                 dones, torch.zeros_like(rewards), self.gamma * next_values
             )
@@ -227,7 +227,7 @@ class DQN:
                 with torch.no_grad():
                     action = (
                         self.current_network(observation_tensor, goal_tensor)
-                        .argmax(1)
+                        .argmax(-1)
                         .item()
                     )
             next_observation, reward, done, _ = self.environment.step(action)
@@ -268,14 +268,14 @@ class DQN:
                     )
                     if self.use_hindsight:
                         goal = observations[-1]
-                        done = (i == len(actions) - 1) or solveds[i + 1]
+                        done = i == len(actions) - 1
                         self.buffer.add(
                             (
                                 observations[i],
                                 actions[i],
-                                self.environment.compute_reward(
-                                    self.environment.compute_state(observations[i + 1]),
-                                    self.environment.compute_state(goal),
+                                self.environment.compute_reward_from_observation(
+                                    observations[i + 1],
+                                    goal,
                                 ),
                                 observations[i + 1],
                                 done,

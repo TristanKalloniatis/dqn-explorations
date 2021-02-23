@@ -31,8 +31,16 @@ class DuellingDQN(torch.nn.Module, abc.ABC):
             self.combine_features = torch.nn.Sequential(
                 torch.nn.Linear(2 * hidden_size, hidden_size), act()
             )
-        self.advantage_map = torch.nn.Linear(hidden_size, num_outputs)
-        self.value_map = torch.nn.Linear(hidden_size, 1)
+        self.advantage_map = torch.nn.Sequential(
+            torch.nn.Linear(hidden_size, hidden_size),
+            act(),
+            torch.nn.Linear(hidden_size, num_outputs),
+        )
+        self.value_map = torch.nn.Sequential(
+            torch.nn.Linear(hidden_size, hidden_size),
+            act(),
+            torch.nn.Linear(hidden_size, 1),
+        )
 
     def forward(self, inputs, goals=None):
         if self.separate_goals:
