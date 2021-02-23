@@ -27,6 +27,7 @@ class DuellingDQN(torch.nn.Module, abc.ABC):
             if image_inputs
             else torch.nn.Sequential(torch.nn.Linear(num_inputs, hidden_size), act())
         )
+
         if separate_goals:
             self.combine_features = torch.nn.Sequential(
                 torch.nn.Linear(2 * hidden_size, hidden_size), act()
@@ -45,7 +46,7 @@ class DuellingDQN(torch.nn.Module, abc.ABC):
     def forward(self, inputs, goals=None):
         if self.separate_goals:
             assert goals is not None, "Need to pass goals explicitly"
-        if goals is not None and not self.separate_goals:
+        elif goals is not None:
             inputs = inputs - goals
         features = self.feature_map(inputs)
         if self.separate_goals:

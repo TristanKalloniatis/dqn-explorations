@@ -24,13 +24,13 @@ def epsilon_by_frame(num_frames_seen, epsilon_start, epsilon_end, epsilon_decay_
 def build_environment(env_config):
     name = env_config["name"]
     if name == "bit":
-        n = env_config["n"] if "n" in env_config else 3
+        n = env_config["n"] if "n" in env_config else hyperparameters.DEFAULT_SIZE
         shaped_reward = (
             env_config["shaped_reward"] if "shaped_reward" in env_config else False
         )
         return environments.BitFlipper(n, shaped_reward)
     elif name == "grid":
-        n = env_config["n"] if "n" in env_config else 3
+        n = env_config["n"] if "n" in env_config else hyperparameters.DEFAULT_SIZE
         shaped_reward = (
             env_config["shaped_reward"] if "shaped_reward" in env_config else False
         )
@@ -207,8 +207,6 @@ class DQN:
             actions = []
             rewards = []
             dones = []
-            if self.environment.store_goals:
-                solveds = [False]
         while not done:
             if training and np.random.rand() < self.epsilon:
                 action = random.choice(range(self.environment.num_actions))
@@ -239,8 +237,6 @@ class DQN:
                 actions.append(action)
                 rewards.append(reward)
                 dones.append(done)
-                if self.environment.store_goals:
-                    solveds.append(self.environment.solved)
                 if len(self.buffer) > self.batch_size:
                     self.train_on_batch()
                     self.synchronise()
@@ -295,7 +291,7 @@ class DQN:
         elif self.environment.store_goals:
             return self.environment.solved
 
-    def train(self, episodes):
+    def train(self, episodes=hyperparameters.TRAIN_EPISODES):
         while self.num_episodes_trained < episodes:
             self.play_episode()
             if self.num_episodes_trained % self.log_freq == 0:
@@ -308,11 +304,8 @@ class DQN:
                     logger,
                 )
 
-    @property
-    def evaluate(self):
-        write_log("Evaluating on {0} episodes".format(self.evaluate_episodes), logger)
-        success_rate = np.mean(
-            [self.play_episode(False) for _ in range(self.evaluate_episodes)]
-        )
+    def evaluate(self, episodes=hyperparameters.EVALUATE_EPISODES):
+        write_log("Evaluating on {0} episodes".format(episodes), logger)
+        success_rate = np.mean([self.play_episode(False) for _ in range(episodes)])
         write_log("Result: {0}".format(success_rate), logger)
         return success_rate

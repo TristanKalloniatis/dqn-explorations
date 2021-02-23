@@ -40,7 +40,7 @@ class GoalEnv:
 
     def compute_done(self, state, goal_state):
         return (
-            equal(state, goal_state) or self.episode_length >= self.max_episode_length
+            equal(state, goal_state) or self.episode_length == self.max_episode_length
         )
 
     @property
@@ -175,6 +175,20 @@ class GridWorld(GoalEnv):
         from matplotlib.pyplot import imshow
 
         imshow((self.observation - self.goal).squeeze(0))
+
+    # Semantic actions for debugging purposes:
+
+    def up(self):
+        return self.step(0)
+
+    def left(self):
+        return self.step(1)
+
+    def down(self):
+        return self.step(2)
+
+    def right(self):
+        return self.step(3)
 
 
 class GymEnv:
